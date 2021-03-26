@@ -26,6 +26,7 @@ const NavBar = () => {
     loginWithRedirect,
     logout,
   } = useAuth0();
+
   const toggle = () => setIsOpen(!isOpen);
 
   const logoutWithRedirect = () =>
@@ -46,8 +47,7 @@ const NavBar = () => {
                   tag={RouterNavLink}
                   to="/"
                   exact
-                  activeClassName="router-link-exact-active"
-                >
+                  activeClassName="router-link-exact-active">
                   Home
                 </NavLink>
               </NavItem>
@@ -55,11 +55,21 @@ const NavBar = () => {
                 <NavItem>
                   <NavLink
                     tag={RouterNavLink}
-                    to="/external-api"
+                    to="/chat"
                     exact
-                    activeClassName="router-link-exact-active"
-                  >
-                    External API
+                    activeClassName="router-link-exact-active">
+                    Chat
+                  </NavLink>
+                </NavItem>
+              )}
+              {isAuthenticated && (
+                <NavItem>
+                  <NavLink
+                    tag={RouterNavLink}
+                    to="/Contacts"
+                    exact
+                    activeClassName="router-link-exact-active">
+                    Contacts
                   </NavLink>
                 </NavItem>
               )}
