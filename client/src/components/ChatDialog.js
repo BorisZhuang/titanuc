@@ -23,38 +23,23 @@ const ChatDialog = () => {
       <ChatMsg
         avatar={AVATAR}
         messages={[
-          'Hi Jenny, How r u today?',
-          'Did you train yesterday',
-          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Volutpat lacus laoreet non curabitur gravida.',
+          'Hi Dorrie, How r u doing today?',
+          'What about your presentation?',
         ]}
       />
       <Typography className={styles.date}>FRI 1:46 PM</Typography>
       <ChatMsg
         side={'right'}
         messages={[
-          "Great! What's about you?",
-          'Of course I did. Speaking of which check this out',
-/*           {
-            type: 'image',
-            alt: 'sticker',
-            src:
-              'https://www.messenger.com/stickers/asset/?sticker_id=702110433208381&image_type=BestEffortImage',
-          }, */
-          'Commodo ullamcorper a lacus vestibulum sed arcu. Sed faucibus turpis in eu mi bibendum neque egestas. Maecenas volutpat blandit aliquam etiam erat velit. Massa placerat duis ultricies lacus sed turpis tincidunt id aliquet. Suspendisse sed nisi lacus sed viverra.',
+          "I'm doing great on my project, thanks for asking.",
         ]}
       />
       <Typography className={styles.date}>FRI 4:18 PM</Typography>
       <ChatMsg
         avatar={AVATAR}
         messages={[
-          'Im good.',
+          'Great!',
           'See u later.',
- /*          {
-            type: 'image',
-            alt: 'sticker',
-            src:
-              'https://scontent.fbkk12-3.fna.fbcdn.net/v/t39.1997-6/47165057_2150118098374296_5034322199196991488_n.png?_nc_cat=1&_nc_eui2=AeGsL8WciYpwOySYRQINElIdV9NubJ7ZbWTW9J5-DlXHPiLCKR8Zvvd4nVyPH4Wa8kceFiL10mXvokNFcEJx9JWz-6XLYgCLmOgTniFDbSjUPw&_nc_ohc=pewFeK6M1ZIAQkL5L9QR2FZcwYjZ0FTWid2zHeUqboLU4azOITkLVGaog&_nc_ht=scontent.fbkk12-3.fna&oh=27a2a48aabccd4cdae4ec4f3f775daa9&oe=5EAF0F3B',
-          }, */
         ]}
       />
     </Box>
