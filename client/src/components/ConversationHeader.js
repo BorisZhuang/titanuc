@@ -56,10 +56,10 @@ const ConversationHead = ({ user, onVideoCallClick }) => {
       />
       <ListItemSecondaryAction>
         <IconButton className={styles.iconBtn} onClick={onVideoCallClick}>
-          <Phone />
+          <Videocam />
         </IconButton>
         <IconButton className={styles.iconBtn}>
-          <Videocam />
+          <Phone />
         </IconButton>
       </ListItemSecondaryAction>
     </ListItem>
