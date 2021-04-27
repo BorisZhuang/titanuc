@@ -29,29 +29,48 @@ io.on('connection', socket => {
     let userId;
 
     socket.on('disconnect', () => {
+      console.log(`delete user ${userId}`)
       delete users[userId]
     })
 
-    socket.on('addUser', data => {
-      userId = data.id;
-      users[userId] = socket.id;
+    socket.on('addUser', user => {
+      console.log(`adding user, ${user.email}`)
+      userId = user.email;
+      let pair = { socketId: socket.id };
+      user = {...user, ...pair};
+      const {picture, ...otherProps} = user;
+      const newUser = {avatar: picture, ...otherProps};
+      users[userId] = newUser
+      console.log(`users count, ${Object.keys(users).length}`)
+      //users[userId] = user;
       io.sockets.emit('allUsers', users)
     })
 
     socket.on('callUser', data => {
-        io.to(users[data.userToCall]).emit('hey', {signal: data.signalData, from: data.from})
+        console.log(`server call user is called from ${data.from} to ${data.userToCall}`)
+        if (users[data.userToCall]) {
+          io.to(users[data.userToCall]["socketId"]).emit('hey', {signal: data.signalData, from: data.from})
+        }
     })
 
     socket.on('acceptCall', data => {
-        io.to(users[data.to]).emit('callAccepted', data.signal)
+      if (users[data.to]) {
+        io.to(users[data.to]["socketId"]).emit('callAccepted', data.signal)
+      }
     })
 
     socket.on('close', data => {
-        io.to(users[data.to]).emit('close')
+        console.log(`call closed, ${data.to}`)
+        if (users[data.to]) {
+          io.to(users[data.to]["socketId"]).emit('close')
+        }
     })
 
     socket.on('rejected', data => {
-        io.to(users[data.to]).emit('rejected')
+        console.log(`call rejected, ${data.to}`)
+        if (users[data.to]) {
+          io.to(users[data.to]["socketId"]).emit('rejected')
+        }
     })
 })
 

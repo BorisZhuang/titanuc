@@ -1,5 +1,4 @@
 import React from 'react';
-import Peer from "simple-peer";
 import { makeStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
@@ -12,6 +11,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
+import CallEndIcon from '@material-ui/icons/CallEnd'
 import Slide from '@material-ui/core/Slide';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
@@ -42,17 +42,10 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 });
 
 export default function VideoCall({
-  peerId,
-  caller,
-  receivingCall,
-  callAccepted,
   openVideo,
-  onVideoCallClose,
-  onCallPeer,
-  onCallPeerSignal,
-  onAcceptCall,
-  onAcceptCallSignal,
-  onRejectCall,
+  callAccepted,
+  userVideo,
+  partnerVideo,
   onEndCall }) {
   const classes = useStyles();
   const [open, setOpen] = React.useState(false);
@@ -62,157 +55,20 @@ export default function VideoCall({
   const [videoInputs, setVideoInputs] = React.useState([]);
   const [audioInputs, setAudioInputs] = React.useState([]);
   const [audioOutputs, setAudioOutputs] = React.useState([]);
-  const [stream, setStream] = React.useState();
   const [callingFriend, setCallingFriend] = React.useState(false);
-  const [callRejected, setCallRejected] = React.useState(false);
 
-  const userVideo = React.useRef();
-  const partnerVideo = React.useRef();
-  const myPeer = React.useRef();
+  console.log('VideoCall is called.')
 
   React.useEffect(() => {
     setOpen(openVideo);
-    callPeer(peerId)
-  }, [openVideo]);
+  }, [openVideo, callAccepted]);
 
-  const endCall = () => {
-    myPeer.current.destroy()
+/*   const endCall = () => {
     onEndCall()
-    window.location.reload()
-  }
-
-  const callPeer = (id) => {
-    if (id !== '' /* && users[id] && id !== user.email*/) {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-        setStream(stream);
-        console.log('setStream was called')
-        setCallingFriend(true)
-        //setCaller(id)
-        if (userVideo.current) {
-          userVideo.current.srcObject = stream;
-        }
-        const peer = new Peer({
-          initiator: true,
-          trickle: false,
-          config: {
-            iceServers: [
-                {url:'stun:stun01.sipphone.com'},
-                {url:'stun:stun.ekiga.net'},
-                {url:'stun:stun.fwdnet.net'},
-                {url:'stun:stun.ideasip.com'},
-                {url:'stun:stun.iptel.org'},
-                {url:'stun:stun.rixtelecom.se'},
-                {url:'stun:stun.schlund.de'},
-                {url:'stun:stun.l.google.com:19302'},
-                {url:'stun:stun1.l.google.com:19302'},
-                {url:'stun:stun2.l.google.com:19302'},
-                {url:'stun:stun3.l.google.com:19302'},
-                {url:'stun:stun4.l.google.com:19302'},
-                {url:'stun:stunserver.org'},
-                {url:'stun:stun.softjoys.com'},
-                {url:'stun:stun.voiparound.com'},
-                {url:'stun:stun.voipbuster.com'},
-                {url:'stun:stun.voipstunt.com'},
-                {url:'stun:stun.voxgratia.org'},
-                {url:'stun:stun.xten.com'},
-                {
-                url: 'turn:numb.viagenie.ca',
-                credential: 'muazkh',
-                username: 'webrtc@live.com'
-                },
-                {
-                url: 'turn:192.158.29.39:3478?transport=udp',
-                credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-                username: '28224511:1379330808'
-                },
-                {
-                url: 'turn:192.158.29.39:3478?transport=tcp',
-                credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-                username: '28224511:1379330808'
-                }
-            ]
-          },
-          stream: stream,
-        });
-
-        myPeer.current = peer;
-
-        peer.on("signal", data => {
-          onCallPeerSignal(data)
-          //socket.current.emit("callUser", { userToCall: id, signalData: data, from: user.email })
-        })
-
-        peer.on("stream", stream => {
-          if (partnerVideo.current) {
-            partnerVideo.current.srcObject = stream;
-          }
-        });
-
-        peer.on('error', (err)=>{
-          endCall()
-        })
-
-        onCallPeer(peer)
-      })
-      .catch (() => {
-        //setModalMessage('You cannot place/ receive a call without granting video and audio permissions! Please change your settings to use Cuckoo.')
-        //setModalVisible(true)
-      })
-    } else {
-      //setModalMessage('We think the username entered is wrong. Please check again and retry!')
-      //setModalVisible(true)
-      return
-    }
-  }
-
-  const acceptCall = () => {
-    //ringtoneSound.unload();
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-      setStream(stream);
-      if (userVideo.current) {
-        userVideo.current.srcObject = stream;
-      }
-      //setCallAccepted(true);
-      const peer = new Peer({
-        initiator: false,
-        trickle: false,
-        stream: stream,
-      });
-
-      myPeer.current = peer
-
-      peer.on("signal", data => {
-        onAcceptCallSignal(data)
-        //socket.current.emit("acceptCall", { signal: data, to: caller })
-      })
-
-      peer.on("stream", stream => {
-        partnerVideo.current.srcObject = stream;
-      });
-
-      peer.on('error', (err)=>{
-        endCall()
-      })
-
-      //peer.signal(callerSignal);
-
-      onAcceptCall(peer)
-    })
-    .catch(()=>{
-      //setModalMessage('You cannot place/ receive a call without granting video and audio permissions! Please change your settings to use Cuckoo.')
-      //setModalVisible(true)
-    })
-  }
-
-  const rejectCall = () => {
-    //ringtoneSound.unload();
-    setCallRejected(true)
-    onRejectCall()
-    window.location.reload()
-  }
+  } */
 
   let UserVideo;
-  if (stream) {
+  if (userVideo.current) {
     UserVideo = (
       <video className="userVideo" playsInline muted ref={userVideo} autoPlay />
     );
@@ -225,20 +81,9 @@ export default function VideoCall({
     );
   }
 
-  let incomingCall;
-  if (receivingCall && !callAccepted && !callRejected) {
-    incomingCall = (
-      <div className="incomingCallContainer">
-        <div className="incomingCall flex flex-column">
-          <div><span>{caller}</span> is calling you!</div>
-          <div className="flex">
-          <button name="accept" onClick={()=>acceptCall()}>Accept</button>
-          <button name="reject" onClick={()=>rejectCall()}>Reject</button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  let hangUp = <IconButton color="secondary" aria-label="end call" onClick={onEndCall}>
+    <CallEndIcon />
+  </IconButton>
 
   const getMediaDevices = () => {
     let videoInputs = [];
@@ -259,14 +104,6 @@ export default function VideoCall({
       setAudioInputs(audioInputs);
       setAudioOutputs(audioOutputs);
     });
-  }
-
-  const getMediaStream = (stream) => {
-    setStream(stream);
-	  //setVideoInput(window.URL.createObjectURL(stream));
-    //var videoTrack = stream.getVideoTracks()[0];
-	  //window.stream = stream;
-	  //videoplay.srcObject = stream;
   }
 
   const handleError = err => {
@@ -300,7 +137,7 @@ export default function VideoCall({
 			audio : true
 		}
 		navigator.mediaDevices.getUserMedia(constraints)
-      .then(getMediaStream)
+      //.then(getMediaStream)
       .catch(handleError);
   }
 
@@ -314,20 +151,7 @@ export default function VideoCall({
 
   return (
     <div>
-      <Dialog fullScreen open={open} onClose={onVideoCallClose} TransitionComponent={Transition}>
-        <AppBar className={classes.appBar}>
-          <Toolbar>
-            <IconButton edge="start" color="inherit" onClick={onVideoCallClose} aria-label="close">
-              <CloseIcon />
-            </IconButton>
-            <Typography variant="h6" className={classes.title}>
-              Video
-            </Typography>
-          </Toolbar>
-        </AppBar>
-        <div>
-          {incomingCall}
-        </div>
+      <Dialog fullScreen open={open} TransitionComponent={Transition}>
         <div className="callContainer">
           <div className="partnerVideoContainer">
             {PartnerVideo}
@@ -335,6 +159,9 @@ export default function VideoCall({
           <div className="userVideoContainer">
             {UserVideo}
           </div>
+        </div>
+        <div className="controlsContainer flex">
+          {hangUp}
         </div>
 {/*         <FormControl className={classes.formControl}>
           <InputLabel id="video-input-label">Video Input</InputLabel>

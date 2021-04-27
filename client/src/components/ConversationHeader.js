@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ConversationHead = ({ onVideoCallClick }) => {
+const ConversationHead = ({ user, onVideoCallClick }) => {
   const styles = useStyles();
 
   return (
@@ -47,11 +47,11 @@ const ConversationHead = ({ onVideoCallClick }) => {
       className={styles.root}
     >
       <ListItemAvatar>
-        <Avatar src={'https://i.pravatar.cc/300?img=13'} />
+        <Avatar src={user.avatar} />
       </ListItemAvatar>
       <ListItemText
-        primary={'Imaad Casey'}
-        secondary={'active 17m ago'}
+        primary={user.name}
+        secondary={user.email}
         classes={{ primary: styles.primary, secondary: styles.secondary }}
       />
       <ListItemSecondaryAction>

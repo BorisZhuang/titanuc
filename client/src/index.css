@@ -1,3 +1,12 @@
+:root{
+  --spacing-unit-micro: 0.3535534rem;
+  --spacing-unit-xmicro: 0.25rem;
+  --spacing-unit: 1.0000001064rem;
+  --lift-shadow: 0 1px 4px rgba(0,0,0,0.1),0 4px 12px rgba(0,0,0,0.06);
+  --rounded-radius: var(--spacing-unit-xmicro);
+  --site-margin: var(--spacing-unit);
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -12,6 +21,12 @@ code {
     monospace;
 }
 
+.callContainer{
+  width: 100vw;
+  height: 100vh;
+  z-index: 1300;
+}
+
 .userVideoContainer{
   max-width: 9rem;
   max-height: 9rem;
@@ -20,7 +35,7 @@ code {
   position: absolute;
   top: var(--spacing-unit-micro);
   left: var(--spacing-unit-micro);
-  z-index: 99;
+  z-index: 1300;
 }
 
 .userVideo{
@@ -33,7 +48,7 @@ code {
 .partnerVideoContainer{
   width: 100%;
   height: 100%;
-  z-index: 99;
+  z-index: 1300;
   background-color: rgba(0,0,0,1);
 }
 
@@ -73,4 +88,14 @@ code {
 
 .incomingCallButtons{
   justify-content: space-between;
+}
+
+.controlsContainer{
+  position: absolute;
+  bottom: 0;
+  align-items: center;
+  justify-content: space-around;
+  height: 4rem;
+  z-index: 1300;
+  width: 100vw;
 }
