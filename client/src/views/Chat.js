@@ -96,15 +96,8 @@ const theme = responsiveFontSizes(
   })
 );
 
-function usePrevious(value) {
-  const ref = useRef();
-  useEffect(() => {
-    ref.current = value;
-  });
-  return ref.current;
-}
-
 const Chat = () => {
+  console.log('entry point')
   const {
     user,
     isAuthenticated
@@ -114,16 +107,19 @@ const Chat = () => {
   const [selectedUser, setSelectedUser] = useState();
   const [stream, setStream] = useState();
   const [receivingCall, setReceivingCall] = useState(false);
+  const [receivingConnection, setReceivingConnection] = useState(false);
   const [caller, setCaller] = useState("");
-  const [callingFriend, setCallingFriend] = useState(false);
   const [callerSignal, setCallerSignal] = useState();
+  const [farEnd, setFarEnd] = useState("")
+  const [farEndSignal, setFarEndSignal] = useState();
+  const [callingFriend, setCallingFriend] = useState(false);
   const [callAccepted, setCallAccepted] = useState(false);
+  const [connectionAccepted, setConnectionAccepted] = useState(false);
   const [callRejected, setCallRejected] = useState(false);
   const [receiverID, setReceiverID] = useState('')
   const [audioMuted, setAudioMuted] = useState(false)
   const [videoMuted, setVideoMuted] = useState(false)
   const [peerMessages, setPeerMessages] = useState([]);
-  const prevPeerMessages = usePrevious(peerMessages)
 
   const userVideo = useRef();
   const partnerVideo = useRef();
@@ -136,16 +132,41 @@ const Chat = () => {
       socket.current.emit("addUser", user)
     })
     socket.current.on("allUsers", (users) => {
+      console.log("allusers")
+      console.log(users)
       setUsers(users);
     });
     socket.current.on("hey", (data) => {
       console.log(`received hey from ${data.from}`)
-      setReceivingCall(true);
+      setReceivingCall(true)
       //ringtoneSound.play();
-      setCaller(data.from);
-      setCallerSignal(data.signal);
+      setCaller(data.from)
+      setCallerSignal(data.signal)
     })
-  }, []);
+    socket.current.on("hey2", data => {
+      console.log(`received hey2 from ${data.from.email}`)
+      //setReceivingConnection(true)
+      setFarEnd(data.from)
+      setFarEndSignal(data.signal)
+      //console.log('users: ')
+      //console.log(users)
+      acceptPeerConnection(data.from, data.signal)
+    })
+  }, []); // only once
+
+   useEffect(() => {
+    console.log("use Effect was call")
+    if (myPeer.current) {
+      myPeer.current.on("stream", stream => {
+        console.log("receiving stream from caller")
+        if (partnerVideo.current) {
+          console.log('set partner video srcObj')
+          console.log(stream)
+          partnerVideo.current.srcObject = stream;
+        }
+      })
+    }
+  }, [callAccepted])
 
   const styles = useStyles();
   const scheme = Layout();
@@ -175,8 +196,92 @@ const Chat = () => {
       });
   });
 
+  const connectPeer = (id) => {
+    console.log("connectPeer was called")
+    const peer = new Peer({
+      initiator: true,
+      trickle: false,
+      config: {
+        iceServers: [
+            {url:'stun:stun01.sipphone.com'},
+            {url:'stun:stun.ekiga.net'},
+            {url:'stun:stun.fwdnet.net'},
+            {url:'stun:stun.ideasip.com'},
+            {url:'stun:stun.iptel.org'},
+            {url:'stun:stun.rixtelecom.se'},
+            {url:'stun:stun.schlund.de'},
+            {url:'stun:stun.l.google.com:19302'},
+            {url:'stun:stun1.l.google.com:19302'},
+            {url:'stun:stun2.l.google.com:19302'},
+            {url:'stun:stun3.l.google.com:19302'},
+            {url:'stun:stun4.l.google.com:19302'},
+            {url:'stun:stunserver.org'},
+            {url:'stun:stun.softjoys.com'},
+            {url:'stun:stun.voiparound.com'},
+            {url:'stun:stun.voipbuster.com'},
+            {url:'stun:stun.voipstunt.com'},
+            {url:'stun:stun.voxgratia.org'},
+            {url:'stun:stun.xten.com'},
+            {
+            url: 'turn:numb.viagenie.ca',
+            credential: 'muazkh',
+            username: 'webrtc@live.com'
+            },
+            {
+            url: 'turn:192.158.29.39:3478?transport=udp',
+            credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+            username: '28224511:1379330808'
+            },
+            {
+            url: 'turn:192.158.29.39:3478?transport=tcp',
+            credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+            username: '28224511:1379330808'
+            }
+        ]
+      },
+    });
+
+    myPeer.current=peer;
+
+    peer.on("signal", data => {
+      console.log(data)
+      console.log("peer was signaled.")
+      socket.current.emit("connectUser", { userToConnect: id, signalData: data, from: user })
+    })
+
+    peer.on('data', data => {
+      console.log('data: ' + data)
+      setPeerMessages(prevMsgs => [...prevMsgs, {from: users[id], to: user, message: data}])
+    })
+
+    peer.on('error', (err)=>{
+      console.log(`error is ${err}`)
+      handleEndCall()
+    })
+
+    socket.current.on("connectionAccepted", signal => {
+      console.log("connection was accepted.")
+      setConnectionAccepted(true);
+      peer.signal(signal);
+    })
+
+    socket.current.on('close', ()=>{
+      window.location.reload()
+    })
+  }
+
   const callPeer = (id) => {
-    if(id!=='' && users[id] && id!==user.email){
+    if(id !== '' && users[id] && id !== user.email) {
+      socket.current.emit("callUser", { userToCall: id, signalData: farEndSignal, from: user.email })
+      socket.current.on("callAccepted", () => {
+        console.log("call was accepte by the callee")
+        setCallAccepted(true);
+        //myPeer.current.signal(signal);
+      })
+
+      socket.current.on('rejected', ()=>{
+        window.location.reload()
+      })
       navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
         setStream(stream);
         setCallingFriend(true)
@@ -184,147 +289,71 @@ const Chat = () => {
         if (userVideo.current) {
           userVideo.current.srcObject = stream;
         }
-        const peer = new Peer({
-          initiator: true,
-          trickle: false,
-          config: {
 
-            iceServers: [
-                // {
-                //     urls: "stun:numb.viagenie.ca",
-                //     username: "sultan1640@gmail.com",
-                //     credential: "98376683"
-                // },
-                // {
-                //     urls: "turn:numb.viagenie.ca",
-                //     username: "sultan1640@gmail.com",
-                //     credential: "98376683"
-                // }
-                {url:'stun:stun01.sipphone.com'},
-                {url:'stun:stun.ekiga.net'},
-                {url:'stun:stun.fwdnet.net'},
-                {url:'stun:stun.ideasip.com'},
-                {url:'stun:stun.iptel.org'},
-                {url:'stun:stun.rixtelecom.se'},
-                {url:'stun:stun.schlund.de'},
-                {url:'stun:stun.l.google.com:19302'},
-                {url:'stun:stun1.l.google.com:19302'},
-                {url:'stun:stun2.l.google.com:19302'},
-                {url:'stun:stun3.l.google.com:19302'},
-                {url:'stun:stun4.l.google.com:19302'},
-                {url:'stun:stunserver.org'},
-                {url:'stun:stun.softjoys.com'},
-                {url:'stun:stun.voiparound.com'},
-                {url:'stun:stun.voipbuster.com'},
-                {url:'stun:stun.voipstunt.com'},
-                {url:'stun:stun.voxgratia.org'},
-                {url:'stun:stun.xten.com'},
-                {
-                url: 'turn:numb.viagenie.ca',
-                credential: 'muazkh',
-                username: 'webrtc@live.com'
-                },
-                {
-                url: 'turn:192.158.29.39:3478?transport=udp',
-                credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-                username: '28224511:1379330808'
-                },
-                {
-                url: 'turn:192.158.29.39:3478?transport=tcp',
-                credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-                username: '28224511:1379330808'
-                }
-            ]
-        },
-          stream: stream,
-        });
-
-        myPeer.current=peer;
-
-        peer.on("signal", data => {
-          socket.current.emit("callUser", { userToCall: id, signalData: data, from: user.email })
-        })
-
-        peer.on("stream", stream => {
-          if (partnerVideo.current) {
-            partnerVideo.current.srcObject = stream;
-          }
-        });
-
-        peer.on('data', data => {
-          console.log('data: ' + data)
-          setPeerMessages([...prevPeerMessages, {sender: users[id], message: data}])
-        })
-
-        peer.on('error', (err)=>{
-          handleEndCall()
-        })
-
-        socket.current.on("callAccepted", signal => {
-          setCallAccepted(true);
-          peer.signal(signal);
-        })
-
-        socket.current.on('close', ()=>{
-          window.location.reload()
-        })
-
-        socket.current.on('rejected', ()=>{
-          window.location.reload()
-        })
+        console.log("adding stream")
+        myPeer.current.addStream(stream)
+/*         stream.getTracks().forEach(function(track) {
+          myPeer.current.addTrack(track, stream);
+        }); */
+        console.log("The peer is: ")
+        console.log(myPeer.current)
       })
-      .catch(()=>{
+      .catch(() => {
         console.log('You cannot place/ receive a call without granting video and audio permissions!')
       })
     } else {
       console.log('We think the username entered is wrong. Please check again and retry!')
-      return
     }
   }
 
-  const acceptCall = () => {
-    //ringtoneSound.unload();
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-      setStream(stream);
-      if (userVideo.current) {
-        userVideo.current.srcObject = stream;
-      }
-      setCallAccepted(true);
+  const acceptPeerConnection = (from, signal2) => {
+    setConnectionAccepted(true)
+    if (myPeer.current) {
+      console.log("acceptPeerConnection1")
+      myPeer.current.signal(signal2);
+    } else {
+      console.log("acceptPeerConnection2")
       const peer = new Peer({
         initiator: false,
         trickle: false,
-        stream: stream,
       });
-
-      myPeer.current=peer
-
+      myPeer.current = peer
       peer.on("signal", data => {
-        socket.current.emit("acceptCall", { signal: data, to: caller })
+        socket.current.emit("acceptConnection", { signal: data, to: from.email })
       })
-
-      peer.on("stream", stream => {
-        if (partnerVideo.current) {
-          partnerVideo.current.srcObject = stream;
-        }
-      });
 
       peer.on('data', data => {
         console.log('data: ' + data)
-        setPeerMessages([...prevPeerMessages, {sender: users[caller], message: data}])
+        console.log(from)
+        setPeerMessages(prevMsgs => [...prevMsgs, {from, to: user, message: data}])
       })
 
-      peer.on('error', (err)=>{
-        handleEndCall()
-      })
-
-      peer.signal(callerSignal);
+      peer.signal(signal2);
 
       socket.current.on('close', ()=>{
         // todo, close video call page
         window.location.reload()
       })
+    }
+  }
+
+  const acceptCall = () => {
+    console.log("accept call from: ")
+    console.log(farEnd)
+    setCallAccepted(true);
+    socket.current.emit("acceptCall", { to: farEnd.email })
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+      setStream(stream);
+      if (userVideo.current) {
+        userVideo.current.srcObject = stream;
+      }
+      myPeer.current.addStream(stream);
+
+      myPeer.current.on('error', (err)=>{
+        handleEndCall()
+      })
     })
-    .catch(()=>{
+    .catch(() => {
       console.log('You cannot place/ receive a call without granting video and audio permissions!')
     })
   }
@@ -338,7 +367,11 @@ const Chat = () => {
 
   const handleOpenVideoCall = () => {
     callPeer(selectedUser.email);
-  };
+  }
+
+  const handleConnect = () => {
+    connectPeer(selectedUser.email);
+  }
 
   const handleEndCall = () => {
     myPeer.current.destroy()
@@ -356,6 +389,7 @@ const Chat = () => {
   const handleOnSend = (event, message) => {
     myPeer.current.send(message)
     console.log(`send ${message}`)
+    setPeerMessages(prevMsgs => [...prevMsgs, {from: user, to: selectedUser, message}])
   }
 
   function renderCall() {
@@ -383,13 +417,18 @@ const Chat = () => {
       return Object.values(others)
   }
 
+  function filteredPeerMessages() {
+    return peerMessages.filter(m => m.from.email === selectedUser.email
+      || m.to.email === selectedUser.email)
+  }
+
   let incomingCall;
   if (receivingCall && !callAccepted && !callRejected) {
     console.log('receiving Call');
     incomingCall = (
       <div className="incomingCallContainer">
         <div className="incomingCall flex flex-column">
-          <div><span>{caller}</span> is calling you!</div>
+          <div><span>{farEnd.email}</span> is calling you!</div>
           <div className="flex">
           <button name="accept" onClick={acceptCall}>Accept</button>
           <button name="reject" onClick={rejectCall}>Reject</button>
@@ -400,16 +439,15 @@ const Chat = () => {
   }
 
   let UserVideo;
-  console.log(`stream is ${stream}`)
   if (stream) {
     console.log('load UserVideo component')
-      //console.log(`userVideo srcObject: ${userVideo.current.srcObject}`)
     UserVideo = (
       <video className="userVideo" playsInline muted ref={userVideo} autoPlay />)
   }
 
   let PartnerVideo;
   if (callAccepted) {
+    console.log('load Partner Video component')
     PartnerVideo = (
       <video className="partnerVideo cover" playsInline ref={partnerVideo} autoPlay />
     );
@@ -473,7 +511,7 @@ const Chat = () => {
             <Header className={styles.header}>
               <Toolbar disableGutters>
                 <SidebarTrigger sidebarId='primarySidebar' />
-                {selectedUser && <ConversationHead onVideoCallClick={handleOpenVideoCall} user={selectedUser}/>}
+                {selectedUser && <ConversationHead user={selectedUser} connected={connectionAccepted} onConnect={handleConnect} onVideoCallClick={handleOpenVideoCall}/>}
               </Toolbar>
             </Header>
             <DrawerSidebar sidebarId={'primarySidebar'}>
@@ -505,12 +543,12 @@ const Chat = () => {
                   </InsetSidebar>
                 }
               >
-                <ChatDialog messages={peerMessages} myId={user.email}/>
+                {selectedUser && <ChatDialog messages={filteredPeerMessages()} myId={user.email}/>}
               </InsetContainer>
             </Content>
             <InsetFooter ContainerProps={{ disableGutters: true }}>
               <Box display={'flex'} alignItems={'center'} p={1}>
-                <ChatBar concise={sidebar.primarySidebar.collapsed} onSend={handleOnSend}/>
+                {selectedUser && <ChatBar concise={sidebar.primarySidebar.collapsed} onSend={handleOnSend}/>}
               </Box>
             </InsetFooter>
           </>

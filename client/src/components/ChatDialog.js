@@ -18,10 +18,21 @@ const useStyles = makeStyles(() => ({
 
 const ChatDialog = ({messages, myId}) => {
   const styles = useStyles();
-  const chatMsgs = messages.map(message => {
-    message.sender.email === myId
-    ? <ChatMsg side={'right'} messages={[message.message]} />
-    : <ChatMsg avatar={message.sender.avatar} messages={[message.message]} />
+  if (!messages) return null;
+  const chatMsgs = messages.map((m) => {
+    console.log(m)
+    let m2 = []
+    if (typeof m.message === "string") {
+      m2.push(m.message)
+    } else {
+      let str = new TextDecoder().decode(m.message)
+      m2.push(str)
+    }
+    return (
+      m.from.email === myId
+      ? <ChatMsg side={'right'} messages={m2} />
+      : <ChatMsg avatar={m.from.picture} messages={m2} />
+    )
   })
 
   return (

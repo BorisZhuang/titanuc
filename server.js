@@ -46,11 +46,24 @@ io.on('connection', socket => {
       io.sockets.emit('allUsers', users)
     })
 
+    socket.on('connectUser', data => {
+      console.log(`server connect user is called from ${data.from.email} to ${data.userToConnect}`)
+      if (users[data.userToConnect]) {
+        io.to(users[data.userToConnect]["socketId"]).emit('hey2', {signal: data.signalData, from: data.from})
+      }
+    })
+
     socket.on('callUser', data => {
         console.log(`server call user is called from ${data.from} to ${data.userToCall}`)
         if (users[data.userToCall]) {
           io.to(users[data.userToCall]["socketId"]).emit('hey', {signal: data.signalData, from: data.from})
         }
+    })
+
+    socket.on('acceptConnection', data => {
+      if (users[data.to]) {
+        io.to(users[data.to]["socketId"]).emit('connectionAccepted', data.signal)
+      }
     })
 
     socket.on('acceptCall', data => {

@@ -31,6 +31,10 @@ const ChatBar = ({onSend}) => {
   const handleChange = (event) => {
     setMessage(event.target.value)
   }
+  const handleOnClick = (event) => {
+    onSend(event, message)
+    setMessage("")
+  }
 
   return (
     <>
@@ -38,8 +42,9 @@ const ChatBar = ({onSend}) => {
         className={styles.input}
         placeholder={'Type a message...'}
         onChange={handleChange}
+        value={message}
       />
-      <IconButton className={styles.iconBtn} onClick={(event) => onSend(event, message)}>
+      <IconButton className={styles.iconBtn} onClick={handleOnClick/*(event) => onSend(event, message)*/}>
         <Send className={styles.icon} />
       </IconButton>
     </>
