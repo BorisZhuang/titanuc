@@ -37,6 +37,7 @@ import Search from '../components/Search';
 import ChatBar from '../components/ChatBar';
 import ChatList from '../components/ChatList';
 import ChatDialog from '../components/ChatDialog';
+import Profile from '../views/Profile';
 import VideoCall from './VideoCall';
 
 const Header = getHeader(styled);
@@ -97,7 +98,6 @@ const theme = responsiveFontSizes(
 );
 
 const Chat = () => {
-  console.log('entry point')
   const {
     user,
     isAuthenticated
@@ -119,6 +119,7 @@ const Chat = () => {
   const [audioMuted, setAudioMuted] = useState(false)
   const [videoMuted, setVideoMuted] = useState(false)
   const [peerMessages, setPeerMessages] = useState([]);
+  const [profileOpened, setProfileOpened] = useState(false);
 
   const userVideo = useRef();
   const partnerVideo = useRef();
@@ -379,6 +380,10 @@ const Chat = () => {
     setPeerMessages(prevMsgs => [...prevMsgs, {from: user, to: selectedUser, message}])
   }
 
+  const handleProfileClick= () => {
+    setProfileOpened(!profileOpened)
+  }
+
   function renderCall() {
     return callingFriend || callAccepted ? 'block' : 'none'
   }
@@ -504,13 +509,13 @@ const Chat = () => {
             <DrawerSidebar sidebarId={'primarySidebar'}>
               {sidebar.primarySidebar.collapsed ? (
                 <Box textAlign={'center'} my={1}>
-                  <IconButton className={styles.edit}>
+                  <IconButton className={styles.edit} onClick={handleProfileClick}>
                     <Edit />
                   </IconButton>
                 </Box>
               ) : (
                 <>
-                  <ChatHeader />
+                  <ChatHeader onProfileClick={handleProfileClick}/>
                   <Box p={'4px 16px 12px'}>
                     <Search />
                   </Box>
@@ -530,6 +535,7 @@ const Chat = () => {
                   </InsetSidebar>
                 }
               >
+                {profileOpened && <Profile />}
                 {selectedUser && <ChatDialog messages={filteredPeerMessages()} myId={user.email}/>}
               </InsetContainer>
             </Content>

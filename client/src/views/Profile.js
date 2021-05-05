@@ -1,35 +1,45 @@
 import React from "react";
 import { Container, Row, Col } from "reactstrap";
-
+import Button from '@material-ui/core/Button';
 import Highlight from "../components/Highlight";
 import Loading from "../components/Loading";
 import { useAuth0, withAuthenticationRequired } from "@auth0/auth0-react";
 
-export const ProfileComponent = () => {
-  const { user } = useAuth0();
+export const Profile = () => {
+  const { user, logout } = useAuth0();
+
+  const logoutWithRedirect = () =>
+    logout({
+      returnTo: window.location.origin,
+    });
 
   return (
-    <Container className="mb-5">
+    <Container className="mb-5" p={2}>
       <Row className="align-items-center profile-header mb-5 text-center text-md-left">
         <Col md={2}>
           <img
             src={user.picture}
             alt="Profile"
-            className="rounded-circle img-fluid profile-picture mb-3 mb-md-0"
+            className="rounded-circle img-fluid profile-picture mb-2 mb-md-0"
           />
         </Col>
         <Col md>
-          <h2>{user.name}</h2>
+          <h3>{user.name}</h3>
           <p className="lead text-muted">{user.email}</p>
         </Col>
       </Row>
       <Row>
-        <Highlight>{JSON.stringify(user, null, 2)}</Highlight>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={logoutWithRedirect}>
+          Log Out
+        </Button>
       </Row>
     </Container>
   );
 };
 
-export default withAuthenticationRequired(ProfileComponent, {
+export default withAuthenticationRequired(Profile, {
   onRedirecting: () => <Loading />,
 });

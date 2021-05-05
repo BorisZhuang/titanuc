@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
 import Avatar from '@material-ui/core/Avatar';
@@ -8,6 +8,7 @@ import ListItemAvatar from '@material-ui/core/ListItemAvatar';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import IconButton from '@material-ui/core/IconButton';
+import ChevronLeft from '@material-ui/icons/ChevronLeft';
 import ChevronRight from '@material-ui/icons/ChevronRight';
 import SettingsApplications from '@material-ui/icons/SettingsApplications';
 import Edit from '@material-ui/icons/Edit';
@@ -39,12 +40,20 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const ChatHeader = () => {
+const ChatHeader = ({onProfileClick}) => {
   const {
     user,
     isAuthenticated
   } = useAuth0();
+  const [actionClicked, setActionClicked] = useState(false);
+
   const styles = useStyles();
+
+  const onActionClick = () => {
+    onProfileClick()
+    setActionClicked(!actionClicked)
+  }
+
   return (
     <ListItem
       ContainerComponent={'div'}
@@ -60,8 +69,8 @@ const ChatHeader = () => {
       classes={{ primary: styles.primary, secondary: styles.secondary }}
     />
     <ListItemSecondaryAction>
-      <IconButton edge='end' className={styles.iconBtn}>
-        <ChevronRight />
+      <IconButton edge='end' className={styles.iconBtn} onClick={onActionClick}>
+        {actionClicked ? <ChevronLeft /> : <ChevronRight />}
       </IconButton>
     </ListItemSecondaryAction>
     </ListItem>
